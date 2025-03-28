@@ -4,7 +4,8 @@ import os
 while True:
     try:
         from playwright.sync_api import sync_playwright
-        import gspread
+        from configparser import ConfigParser
+        import gspread, pathlib
     except ImportError as e:
         package = e.msg.split()[-1][1:-1]
         pip(['install', package])
@@ -13,14 +14,28 @@ while True:
     else:
         break
 
-# def main(start: int, end: int, setup: dict):
-def main():
+dir = pathlib.Path(__file__).parent.resolve()
 
-    # worksheet: gspread.spreadsheet.Spreadsheet = setup.get('GoogleSheet')
-    # sheet = worksheet.worksheet('')
+config = ConfigParser()
+config.read(os.path.join(dir, 'config.ini'))
+sheet_url = config.get('parser', 'url')
 
-    art = '62605pb01c01'
-    color = '86'
+def main(start: int, end: int, setup: dict):
+
+    creds = setup.get('GoogleCredentials')
+    google_client = gspread.authorize(creds)
+    spreadsheet = google_client.open_by_url(sheet_url)
+    sheet = spreadsheet.worksheet('Детали')
+    
+    colorsheet = spreadsheet.worksheet('colors')
+    colorrange = colorsheet.range('A2:B')
+    color2id = {}
+    for i in range(0, len(colorrange)//2, 2):
+        color2id[colorrange[i].value] = colorrange[i+1].value
+    print(color2id)
+
+    articles = sheet.range(f'C{start}:C{end}')
+    colors = sheet.range(f'B{start}:B{end}')
 
     with sync_playwright() as p:
         driver = p.chromium.launch(proxy={
@@ -29,6 +44,24 @@ def main():
             'password': 'pe9qf7'
         }, headless=False)
         page = driver.new_page()
-        page.goto(f'https://www.bricklink.com/v2/catalog/catalogitem.page?P={art}#T=C&C={color}')
+        for idx in range(len(articles)):
+            try:
+                if articles[idx] == None:
+                    break
+            except:
+                break
+            page.goto(f'https://www.bricklink.com/v2/catalog/catalogitem.page?P={articles[idx].value}#T=C&C={color2id[colors[idx].value]}')
 
-main()
+# ================ ДЛЯ ТЕСТИРОВАНИЯ ================
+
+from google.oauth2.service_account import Credentials 
+setup = {
+    "GoogleCredentials": Credentials.from_service_account_file(
+        os.path.join(dir, 'credentials.json'),
+        scopes=['https://www.googleapis.com/auth/spreadsheets']
+    )
+}
+
+# ================ ДЛЯ ТЕСТИРОВАНИЯ ================
+
+main(2, 10, setup)
