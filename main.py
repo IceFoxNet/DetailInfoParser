@@ -47,14 +47,14 @@ def main(start: int, end: int, setup: dict):
     print('Начинаем работу с браузером')
 
     # ==> РАБОТА С БРАУЗЕРОМ
-    with sync_playwright() as p:
-        driver = p.chromium.launch(proxy={
-            'server': 'http://166.0.211.142:7576',
-            'username': 'user258866',
-            'password': 'pe9qf7'
-        })
-        page = driver.new_page()
-        for idx in range(len(articles)):
+    for idx in range(len(articles)):
+        with sync_playwright() as p:
+            driver = p.chromium.launch(proxy={
+                'server': 'http://166.0.211.142:7576',
+                'username': 'user258866',
+                'password': 'pe9qf7'
+            })
+            page = driver.new_page()
             try:
                 print(f'Обработка артикула {articles[idx].value} {colors[idx].value}')
                 page.goto(f'https://www.bricklink.com/v2/catalog/catalogitem.page?P={articles[idx].value}#T=P&C={color2id[colors[idx].value]}')
@@ -70,7 +70,8 @@ def main(start: int, end: int, setup: dict):
             else:
                 qty_res.append([qty_val])
                 price_res.append([prc_val])
+            finally: continue
     print(f'Загружаем информацию на таблицу')
-    sheet.update(qty_res, f'H3:H{len(qty_res)+2}')
-    sheet.update(price_res, f'G3:G{len(qty_res)+2}')
+    sheet.update(qty_res, f'H{start}:H{end}')
+    sheet.update(price_res, f'G{start}:G{end}')
     print(f'Программа завершила выполнение')
