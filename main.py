@@ -1,4 +1,3 @@
-from pip._internal import main as pip
 import os
 
 while True:
@@ -8,9 +7,7 @@ while True:
         import gspread, pathlib, requests
     except ImportError as e:
         package = e.msg.split()[-1][1:-1]
-        pip(['install', package])
-        if package == 'playwright':
-            os.system('playwright install')
+        os.system(f'python -m pip install {package}')
     else:
         break
 
