@@ -76,6 +76,6 @@ def main(start: int, end: int, setup: dict):
                 price_res.append([prc_val])
             finally: continue
     print(f'Загружаем информацию на таблицу')
-    sheet.update(qty_res, f'H{start}:H{end}')
-    sheet.update(price_res, f'G{start}:G{end}')
+    sheet.update(qty_res, f'H{start}:H{len(qty_res)+start}')
+    sheet.update(price_res, f'G{start}:G{len(price_res)+start}')
     print(f'Программа завершила выполнение')
