@@ -40,6 +40,7 @@ def main(start: int, end: int, setup: dict):
     colors = sheet.range(f'B{start}:B{end}')
     qty_res = []
     price_res = []
+    name_res = []
 
     # ==> ПОЛУЧЕНИЕ КУРСА ДОЛЛАРА
     rub = requests.get('https://www.cbr-xml-daily.ru/daily_json.js').json()['Valute']['USD']['Value']
@@ -67,15 +68,19 @@ def main(start: int, end: int, setup: dict):
                 rows = table.query_selector_all('tr')
                 qty_val = int(rows[1].query_selector_all('td')[-1].text_content())
                 prc_val = round(float(rows[4].query_selector_all('td')[-1].text_content()[4:]) * rub)
+                name_val = page.query_selector('#item-name-title').text_content()
             except Exception as e:
                 print(f'Ошибка при работе с артикулом {articles[idx].value} (https://www.bricklink.com/v2/catalog/catalogitem.page?P={articles[idx].value}#T=P&C={color2id[colors[idx].value]})\n{str(e)}')
-                qty_res.append([0])
-                qty_res.append([0])
+                qty_res.append([None])
+                price_res.append([None])
+                name_res.append([None])
             else:
                 qty_res.append([qty_val])
                 price_res.append([prc_val])
+                name_res.append([name_val])
             finally: continue
     print(f'Загружаем информацию на таблицу')
     sheet.update(qty_res, f'H{start}:H{len(qty_res)+start}')
     sheet.update(price_res, f'G{start}:G{len(price_res)+start}')
+    sheet.update(price_res, f'A{start}:A{len(name_res)+start}')
     print(f'Программа завершила выполнение')
