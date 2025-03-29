@@ -48,6 +48,10 @@ def main(start: int, end: int, setup: dict):
 
     # ==> РАБОТА С БРАУЗЕРОМ
     for idx in range(len(articles)):
+        try: 
+            if articles[idx].value == '' and colors[idx].value == '': break
+        except: 
+            break
         with sync_playwright() as p:
             driver = p.chromium.launch(proxy={
                 'server': 'http://166.0.211.142:7576',
