@@ -82,5 +82,5 @@ def main(start: int, end: int, setup: dict):
     print(f'Загружаем информацию на таблицу')
     sheet.update(qty_res, f'H{start}:H{len(qty_res)+start}')
     sheet.update(price_res, f'G{start}:G{len(price_res)+start}')
-    sheet.update(price_res, f'A{start}:A{len(name_res)+start}')
+    sheet.update(name_res, f'A{start}:A{len(name_res)+start}')
     print(f'Программа завершила выполнение')
