@@ -21,6 +21,7 @@ def main(start: int, end: int, setup: dict):
     
     print('Подготавливаем всё для работы')
     if start < 3: start = 3
+    cache = {}
 
     # ==> ПОДКЛЮЧЕНИЕ ГУГЛ-АККАУНТА
     creds = setup.get('GoogleCredentials')
@@ -50,9 +51,15 @@ def main(start: int, end: int, setup: dict):
     # ==> РАБОТА С БРАУЗЕРОМ
     for idx in range(len(articles)):
         try: 
-            if articles[idx].value == '' and colors[idx].value == '': break
+            if (not articles[idx].value) or (not colors[idx].value): continue
         except: 
             break
+        identity = (articles[idx].value) + ' ' + str(colors[idx].value)
+        if identity in cache:
+            qty_res.append([cache[identity][0]])
+            price_res.append([cache[identity][1]])
+            name_res.append([cache[identity][2]])
+            continue
         with sync_playwright() as p:
             driver = p.chromium.launch(proxy={
                 'server': 'http://166.0.211.142:7576',
@@ -78,6 +85,7 @@ def main(start: int, end: int, setup: dict):
                 qty_res.append([qty_val])
                 price_res.append([prc_val])
                 name_res.append([name_val])
+                cache[identity] = (qty_val, prc_val, name_val)
             finally: continue
     print(f'Загружаем информацию на таблицу')
     sheet.update(qty_res, f'H{start}:H{len(qty_res)+start}')
