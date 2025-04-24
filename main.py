@@ -62,6 +62,7 @@ async def main(start: int, end: int, setup: dict):
 @alru_cache(None)
 async def parse_item(semaphore: asyncio.Semaphore, driver: Browser, art: str, color: str):
     global rub
+    if (not art) or (not color): return (None, None, None)
     async with semaphore:
         page = await driver.new_page()
         try:
