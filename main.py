@@ -13,10 +13,13 @@ while True:
 
 dir = pathlib.Path(__file__).parent.resolve()
 rub = requests.get('https://www.cbr-xml-daily.ru/daily_json.js').json()['Valute']['USD']['Value']
+color2id = {}
+
 
 async def main(start: int, end: int, setup: dict):
     
     print('Подготавливаем всё для работы')
+    global color2id
     if start < 3: start = 3
 
     # ==> ПОДКЛЮЧЕНИЕ ГУГЛ-АККАУНТА
@@ -26,7 +29,6 @@ async def main(start: int, end: int, setup: dict):
     # ==> СОЗДАНИЕ ТАБЛИЦЫ ПЕРЕВОДА ЦВЕТА В ID
     colorsheet = spreadsheet.worksheet('colors')
     colorrange = colorsheet.range('A2:B')
-    color2id = {}
     for i in range(0, len(colorrange)//2, 2):
         color2id[colorrange[i].value] = colorrange[i+1].value
 
@@ -47,7 +49,7 @@ async def main(start: int, end: int, setup: dict):
             'username': 'user258866',
             'password': 'pe9qf7'
         })
-        tasks = [parse_item(semaphore, browser, articles[idx].value, color2id[colors[idx].value]) for idx in range(len(articles))]
+        tasks = [parse_item(semaphore, browser, articles[idx].value, colors[idx].value) for idx in range(len(articles))]
         results = await asyncio.gather(*tasks)
     for res in results:
         qty_res.append([res[0]])
@@ -60,9 +62,13 @@ async def main(start: int, end: int, setup: dict):
     print(f'Программа завершила выполнение')
 
 @alru_cache(None)
-async def parse_item(semaphore: asyncio.Semaphore, driver: Browser, art: str, color: str):
-    global rub
-    if (not art) or (not color): return (None, None, None)
+async def parse_item(semaphore: asyncio.Semaphore, driver: Browser, art: str, color_name: str):
+    global rub, color2id
+    if (not art) or (not color_name): return (None, None, None)
+    try:
+        color = color2id[color_name]
+    except:
+        return (None, None, None)
     async with semaphore:
         page = await driver.new_page()
         try:
@@ -83,11 +89,11 @@ async def parse_item(semaphore: asyncio.Semaphore, driver: Browser, art: str, co
             name_val = await item_name_title_div.text_content()
         except Exception as e:
             await page.close()
-            return((None, None, None))
+            return (None, None, None)
         else:
             await page.close()
-            return((qty_val, prc_val, name_val))
+            return (qty_val, prc_val, name_val)
 
 if __name__ == '__main__':
     from Setup.setup import setup
-    asyncio.run(main(3, 20, setup))
+    asyncio.run(main(3, 10_000, setup))
